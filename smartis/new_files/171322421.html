@@ -1,0 +1,16 @@
+<ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="b0b74390-604a-42c4-a63a-8a4864dcbf5f"><ac:plain-text-body><![CDATA[Верификация обращений выполняется двумя синхронами.
+	1. `app/Synchronizers/Stat/Verification/DailySync.php` - каждый день в 7 утра, он создает задачи на верификацию обращений за последние 45 дней.
+	2. `app/Synchronizers/Stat/Verification/RegularSync.php` - регулярный синхрон, который был сделан специально под ЮСИ, и верифицирует обращения за последние 3 дня, каждые несколько часов (работает в режиме static, то есть не генерирует задачи)
+
+
+__ВАЖНО.__ Мы верифицируем только те обращения, у которых определена персона (колонка `person_id` в таблице `requests`). И мы должны успевать верифицировать обращения за предыдущий день. По АФИ и ФСК обращения за вчерашний день должны быть проанализированы к 9.00 утра сегодняшнего дня.
+
+Верификация работает по трем клиентам: АФИ, ФСК и ЮСИ. Для каждого клиента своя логика верификации.
+	1.АФИ - `app/Services/UseCase/Classes/Verification/AfiVerificationSyncHandler.php` (нужна документация на бизнес логику АФИ)
+	2.ФСК - `app/Services/UseCase/Classes/Verification/UsiVerificationSyncHandler.php` (нужна документация на бизнес логику ФСК)
+	3.ЮСИ - `app/Services/UseCase/Classes/Verification/VerificationSyncHandler.php` (нужна документация на бизнес логику ЮСИ)
+
+
+Следить за работой можно в [Grafana](http://grafana.smartis.bi/d/43JFyy4Sz/verifikatsiia?orgId=1).
+
+]]></ac:plain-text-body></ac:structured-macro>

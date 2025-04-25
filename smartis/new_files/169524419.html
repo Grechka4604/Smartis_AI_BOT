@@ -1,0 +1,34 @@
+<ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="fbf707df-abc1-4336-9836-8a92db18bb44"><ac:plain-text-body><![CDATA[[Инструкция по подключению и по логике работы со стороны клиента](https://docs.uiscom.ru/pages/viewpage.action?pageId=161846526)
+
+## Настройки
+
+В LAL можно выбрать сегменты и настроить рекламные кабинеты, куда отправлять сегменты.
+
+Сегменты участвующие в решении хранятся в таблице `segments_cdp_solutions` с фильтром `solution_code=look_alike`.
+
+Настройки по LAL хранятся в таблице `segments_cdp_solutions_services` с фильтром `solution_code=look_alike`. В колонке
+`settings_json` хранится информация о том в какие рекламные кабинеты отправлять LAL-сегменты.
+Структура настройки описана в классе `\App\Classes\CDP\Solutions\Settings\Entities\YAudienceAccount`.
+
+
+## Алгоритм работы
+
+LAL отрабатывает ежечасно, инициируется в `\App\Synchronizers\Stat\CDP\LaunchLalSync`
+
+Он внутри себя запускает единый UseCase для запуска решений - `\App\Classes\CDP\UseCase\LaunchSolutionUseCase`
+
+Далее через общие алгоритмы работы решений все переходит в зону работы класса `\App\Classes\CDP\Solutions\Strategies\LalLauncherStrategy`.
+Данный класс начинает работать с настроенными сегментами и пробегается по настроенным аккаунтам и для них начинает 
+применять логику работы lal-алгоритма. 
+
+Логика работы с аккаунтом описана в классе `\App\Classes\CDP\Solutions\Algorithms\YAudienceLalAlgorithm`. В данном классе описывается 
+логика выдачи доступов к сегментам и отмену доступов при отключении аккаунта.
+
+
+## Мониторинг
+
+За работоспособностью модуля можно смотреть в [Grafana](http://grafana.smartis.bi/d/ZpGyV0-Vk/otkliuchen-look-alike?orgId=1).
+Можно увидеть подключенных клиентов, работу синхрона и логи ошибок.
+
+
+]]></ac:plain-text-body></ac:structured-macro>

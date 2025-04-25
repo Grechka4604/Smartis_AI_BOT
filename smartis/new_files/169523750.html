@@ -1,0 +1,25 @@
+<ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="df264b6d-74a9-4435-b58a-e91069a1f5b3"><ac:plain-text-body><![CDATA[## Описание
+
+Глобальные сегменты - это сегменты, которые собираются системной в рамках всех клиентов
+по определенным правилам. Все результаты сборки хранятся в таблице `smartis_stat.segments_persons_links`.
+
+Система ежедневно собирает глобальные сегменты:
+- Спам
+- Фрод
+- Спам.Авто
+- Фрод.Авто
+
+Эти сегменты можно найти в таблице `segments` c `type=global`. На 2023-09-21 это единственные функционирующие глобальные сегменты.
+
+Основной алгоритм сборки глобальных сегментов:
+1. Ежедневный синхрон `\App\Synchronizers\Stat\CDP\GlobalSegmentsProcessing` 
+2. Логика обработки и сохранения результатов - `\App\Services\UseCase\Stat\CDP\GlobalSegmentsProcessing\FraudStrategy`
+
+> P.S. В идеале, класс под вторым пунктом необходимо перенести в `Classes/CDP`
+
+## Мониторинг
+За работоспособностью модуля можно смотреть в [Grafana](http://grafana.smartis.bi/d/3aIW12D4z/sborka-global-nykh-segmentov-spam-i-frod?orgId=1).
+Можно наблюдать за объемом всех сегментов, работой синхрона, его ошибок и логов.
+
+
+]]></ac:plain-text-body></ac:structured-macro>

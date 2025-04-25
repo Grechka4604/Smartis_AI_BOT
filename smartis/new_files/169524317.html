@@ -1,0 +1,51 @@
+<ac:structured-macro ac:name="markdown" ac:schema-version="1" ac:macro-id="049b4a09-b183-40a3-bef2-d25caf7a44f6"><ac:plain-text-body><![CDATA[
+
+## Описание
+
+Система умеет отправлять сегменты в рекламные кабинеты клиентов. Smartis умеет отправлять в сервисы:
+- Яндекс.Аудитории
+- MyTarget
+>По поводу MyTarget есть вопросы, так как у них были какие-то измнения в API, и возможно она больше не поддерживается,
+> надо тестировать.
+
+В таблице `smartis_stat.segments_integrations_links` хранится связка наших сегментов с сегментами во рекламном кабинете.
+
+Алгоритм отправки сегментов делится на две части: **_создание планов_** и **_отправка в сервис_**.
+
+### Создание планов
+Все планы на отправку находятся в таблице `smartis_stat.segments_syncs_transport_plan` и они создаются автоматически.
+
+Алгоритм создания планов:
+1. Ежедневный синхрон `\App\Synchronizers\Stat\CDP\TransportSegmentsPlanGenerator`
+2. Логика создания планов описана в `\App\Services\CDP\TransportSegmentsService::createPlanByTransportSegments`
+
+### Отправка в сервис
+
+На основе созданных планов, система начинает также самостоятельно отправлять их в рекламные сервисы.
+Необходимо, чтобы логика отправки планов отрабатывала после того, как планы создадутся.
+
+Алгоритм отправки планов:
+
+**1.** Ежедневный синхрон `\App\Classes\CDP\Synchronizers\Transport\TransportSynchronManager`
+
+**2.** Логика обработки планов перед отправкой `\App\Classes\CDP\Synchronizers\Transport\TransportSynchronManager`
+>Он внутри себя определяет какие планы нужно отправить и инициализирует класс для работы с сегментом,
+> и класс сервиса для отправки в рекламный кабинет.
+
+**3.** Логика отправки сегментов. Реализовано отправки сегментов 2 типов
+- локальный сегмент - `\App\Classes\CDP\Synchronizers\Transport\TransportSegmentsProcessing`
+- lal сегмент - `\App\Classes\CDP\Synchronizers\Transport\TransportSegmentsLalProcessing`
+> Сама логика отправки едина и описана в `\App\Classes\CDP\Synchronizers\Transport\TransportSynchronBase::run`
+>  - получи данные для отправки `->get()`
+>  - отправь их `->send()`
+>  - сохрани результат`->save()`
+
+## Мониторинг
+
+За работоспособностью модуля можно смотреть в [Grafana](http://grafana.smartis.bi/d/b-tOvO37z/otpravka-segmentov-v-reklamnye-servisy-segmentstransport?orgId=1).
+Можно наблюдать за работой синхронов по созданию и сборке планов, также смотреть состояние планов.
+
+
+
+
+]]></ac:plain-text-body></ac:structured-macro>

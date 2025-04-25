@@ -1,0 +1,50 @@
+<p>Большую часть расходов мы загружаем не как обычно - а через API Автомира. Для этого был сделан специальный код в нашем продукте.</p><ol class="RichTextList-numbered"><li><p>используются показатели:&nbsp;</p><ol class="RichTextList-numbered"><li><p>Бюджет медиапланов (факт),&nbsp;</p></li><li><p>Бюджет медиапланов (факт) с НДС,&nbsp;</p></li><li><p>Расходы <a href="http://avtomir.ru">avtomir.ru</a>,&nbsp;</p></li><li><p>Расходы <a href="http://avtomir.ru">avtomir.ru</a> с НДС</p></li></ol></li><li><p>Сколько должно быть:</p></li></ol><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="17a80850-431b-4238-a0d4-11066ca19da5"><ac:parameter ac:name="language">sql</ac:parameter><ac:plain-text-body><![CDATA[SELECT
+	objects.id as object_id,
+	objects.title,
+	expense.site_id,
+	placement.title as placement_title,
+	expense.placement_id,
+	expense.cost_metrik_id,
+	cost_metrik.title,
+	SUM(expense.cost) as cost,
+	expense.vat_metrik_id,
+	vat_metrik.title,
+	SUM(expense.cost_vat_incl) as cost_vat_incl
+FROM avtomir_expenses expense
+INNER JOIN objects_sites ON objects_sites.site_id = expense.site_id
+INNER JOIN objects ON objects.id = objects_sites.object_id AND objects.about IS NULL
+INNER JOIN Reports_Channels placement ON placement.id = expense.placement_id
+INNER JOIN GA_metriks cost_metrik ON cost_metrik.id = expense.cost_metrik_id
+INNER JOIN GA_metriks vat_metrik ON vat_metrik.id = expense.vat_metrik_id
+WHERE 
+	date BETWEEN '2023-06-01' AND '2023-07-31' 
+	AND expense.placement_id = 247881 /*Autospot // Общее*/
+GROUP BY object_id, site_id, placement_id, cost_metrik_id, vat_metrik_id
+ORDER BY cost DESC;]]></ac:plain-text-body></ac:structured-macro><p><br />3. Сколько импортировано</p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="2d30f406-03d1-4f3f-ae17-27fb981e0b35"><ac:parameter ac:name="language">sql</ac:parameter><ac:plain-text-body><![CDATA[SELECT
+	objects.id as object_id,
+	objects.title,
+	item.site_id,
+	placement.title as placement_title,
+	item.placement_id,
+	item.metrik_id,
+	metrik.title,
+	SUM(item.value) as cost
+FROM import_items AS item
+INNER JOIN objects_sites ON objects_sites.site_id = item.site_id
+INNER JOIN objects ON objects.id = objects_sites.object_id AND objects.about IS NULL
+INNER JOIN Reports_Channels placement ON placement.id = item.placement_id
+INNER JOIN GA_metriks metrik ON metrik.id = item.metrik_id
+WHERE 
+	FROM_UNIXTIME(item.date_create) BETWEEN '2023-06-01' AND '2023-07-31' 
+	AND item.placement_id = 247881 /*Autospot // Общее*/
+GROUP BY object_id, site_id, placement_id, metrik_id
+ORDER BY cost DESC]]></ac:plain-text-body></ac:structured-macro><p><br /></p><p>4. Расхождения</p><ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="47177259-e11d-4147-80a7-e379cd9f9ec7"><ac:parameter ac:name="language">sql</ac:parameter><ac:plain-text-body><![CDATA[SELECT *, ABS(expense.cost_vat_incl - import_vat.cost) AS diff
+FROM avtomir_expenses_tmp as expense
+LEFT JOIN import_data as import_vat ON import_vat.site_id = expense.site_id AND import_vat.metrik_id = expense.vat_metrik_id AND import_vat.placement_id = expense.placement_id
+HAVING diff > 1;
+
+
+SELECT *, ABS(expense.cost - import_cost.cost) AS diff
+FROM avtomir_expenses_tmp as expense
+LEFT JOIN import_data as import_cost ON import_cost.site_id = expense.site_id AND import_cost.metrik_id = expense.cost_metrik_id AND import_cost.placement_id = expense.placement_id
+HAVING diff > 1;]]></ac:plain-text-body></ac:structured-macro>
