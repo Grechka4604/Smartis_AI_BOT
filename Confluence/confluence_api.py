@@ -7,6 +7,7 @@ from config import CONFLUENCE_URL, SPACE_KEY, USERNAME, PASSWORD
 session = requests.Session()
 session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
 
+# общая функция запроса
 def safe_request(url, params=None):
     try:
         response = session.get(url, params=params)
@@ -16,22 +17,55 @@ def safe_request(url, params=None):
         print(f"Ошибка запроса к {url}: {str(e)}")
         return None
 
-def get_all_pages():
+# возвращение все страницы (старый метод, сохраняющий все значения)
+# def get_all_pages():
+#     url = f"{CONFLUENCE_URL}/rest/api/content"
+#     params = {'spaceKey': SPACE_KEY, 'limit': 100}
+#     all_pages = []
+#     start = 0
+#     while True:
+#         params['start'] = start
+#         data = safe_request(url, params)
+#         if not data or 'results' not in data:
+#             break
+#         all_pages.extend(data['results'])
+#         if 'size' not in data or data['size'] < params['limit']:
+#             break
+#         start += params['limit']
+#     return all_pages
+
+# возвращаем идентификаторы всех страниц
+def get_all_pages_ids():
     url = f"{CONFLUENCE_URL}/rest/api/content"
-    params = {'spaceKey': SPACE_KEY, 'limit': 100}
-    all_pages = []
+    params = {
+        'spaceKey': SPACE_KEY,
+        'limit': 100,
+        'expand': '', 
+        'fields': 'id'
+    }
+    all_page_ids = []
     start = 0
+    
     while True:
         params['start'] = start
         data = safe_request(url, params)
+        
         if not data or 'results' not in data:
             break
-        all_pages.extend(data['results'])
+            
+        # Собираем только ID из результатов
+        all_page_ids.extend(page['id'] for page in data['results'])
+        
+        # Проверяем, есть ли еще страницы
         if 'size' not in data or data['size'] < params['limit']:
             break
+            
         start += params['limit']
-    return all_pages
+    
+    return all_page_ids
 
+
+# получение детальной информации о странице
 def get_page_details(page_id):
     url = f"{CONFLUENCE_URL}/rest/api/content/{page_id}"
     params = {'expand': 'body.storage,version'}

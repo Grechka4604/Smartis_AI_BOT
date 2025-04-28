@@ -3,9 +3,9 @@
 import os
 import time
 from datetime import datetime
-from config import CONFLUENCE_URL, SPACE_KEY, USERNAME, PASSWORD, OUTPUT_DIR
-from API.confluence_api import get_all_pages, get_page_details
-from version_cache import load_version_cache, save_version_cache, setup_logging, log_sync_result
+from config import USERNAME, PASSWORD, OUTPUT_DIR
+from Confluence.confluence_api import get_all_pages_ids, get_page_details
+from Confluence.version_cache import load_version_cache, save_version_cache, setup_logging, log_sync_result
 from requests.auth import HTTPBasicAuth
 import requests
 
@@ -17,19 +17,26 @@ LOG_FILE = os.path.join(OUTPUT_DIR, "sync.log")
 session = requests.Session()
 session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
 
-def safe_request(url, params=None):
-    try:
-        response = session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка запроса к {url}: {str(e)}")
-        return None
 
+# создание дирректорий, если они не сущетсвуют
 def ensure_dirs():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(NEW_DIR, exist_ok=True)
     os.makedirs(UPD_DIR, exist_ok=True)
+    
+    # Проверка прав на запись
+    test_file = os.path.join(OUTPUT_DIR, '.permission_test')
+    try:
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+    except Exception as e:
+        raise PermissionError(f"Нет прав на запись в {OUTPUT_DIR}: {str(e)}")
+
+
+
+
+
 
 def sync_pages():
     version_cache = load_version_cache(OUTPUT_DIR)
@@ -38,8 +45,8 @@ def sync_pages():
     updated_count = 0
     failed_files = []
 
-    for page in get_all_pages():
-        page_id = page.get('id')
+    for id in get_all_pages_ids():
+        page_id = id
         if not page_id:
             continue
 

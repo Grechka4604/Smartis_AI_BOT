@@ -2,10 +2,10 @@
 
 import os
 import logging
-from datetime import datetime
 
 CACHE_FILENAME = ".version_cache"
 
+# выгрузка текущго кэша
 def load_version_cache(output_dir):
     cache = {}
     path = os.path.join(output_dir, CACHE_FILENAME)
@@ -17,12 +17,14 @@ def load_version_cache(output_dir):
                     cache[parts[0]] = int(parts[1])
     return cache
 
+# закгрузка нового кэша
 def save_version_cache(cache, output_dir):
     path = os.path.join(output_dir, CACHE_FILENAME)
     with open(path, 'w') as f:
         for page_id, version in cache.items():
             f.write(f"{page_id}|{version}\n")
 
+# логирование
 def setup_logging(log_path):
     logging.basicConfig(
         filename=log_path,
@@ -31,6 +33,7 @@ def setup_logging(log_path):
         encoding='utf-8'
     )
 
+# выгрузка статистики
 def log_sync_result(new_count, updated_count, failed_files):
     msg = (
         f"Синхронизация завершена: "

@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, types
 import asyncio
 from aiogram.filters import CommandStart
 from config import BOT_TOKEN
-from API.openai_api import get_assistant_response
+from OpenAI.openai_api import get_assistant_response
 
 
 
