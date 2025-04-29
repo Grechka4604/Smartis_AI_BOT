@@ -17,22 +17,6 @@ def safe_request(url, params=None):
         print(f"Ошибка запроса к {url}: {str(e)}")
         return None
 
-# возвращение все страницы (старый метод, сохраняющий все значения)
-# def get_all_pages():
-#     url = f"{CONFLUENCE_URL}/rest/api/content"
-#     params = {'spaceKey': SPACE_KEY, 'limit': 100}
-#     all_pages = []
-#     start = 0
-#     while True:
-#         params['start'] = start
-#         data = safe_request(url, params)
-#         if not data or 'results' not in data:
-#             break
-#         all_pages.extend(data['results'])
-#         if 'size' not in data or data['size'] < params['limit']:
-#             break
-#         start += params['limit']
-#     return all_pages
 
 # возвращаем идентификаторы всех страниц
 def get_all_pages_ids():

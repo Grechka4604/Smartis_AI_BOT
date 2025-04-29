@@ -1,8 +1,6 @@
 # main.py
 
 import os
-import time
-from datetime import datetime
 from config import USERNAME, PASSWORD, OUTPUT_DIR
 from Confluence.confluence_api import get_all_pages_ids, get_page_details
 from Confluence.version_cache import load_version_cache, save_version_cache, setup_logging, log_sync_result
@@ -13,6 +11,8 @@ POLLING_INTERVAL = 3600  # 1 час
 NEW_DIR = os.path.join(OUTPUT_DIR, "new_files")
 UPD_DIR = os.path.join(OUTPUT_DIR, "updated_files")
 LOG_FILE = os.path.join(OUTPUT_DIR, "sync.log")
+CACHE_FILE = os.path.join(OUTPUT_DIR, ".version_cache")
+MAP_FILE = os.path.join(OUTPUT_DIR, "file_mapping.json")
 
 session = requests.Session()
 session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
@@ -23,7 +23,8 @@ def ensure_dirs():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(NEW_DIR, exist_ok=True)
     os.makedirs(UPD_DIR, exist_ok=True)
-    
+    setup_logging(LOG_FILE)
+
     # Проверка прав на запись
     test_file = os.path.join(OUTPUT_DIR, '.permission_test')
     try:
@@ -79,16 +80,4 @@ def sync_pages():
     save_version_cache(new_cache, OUTPUT_DIR)
     log_sync_result(new_count, updated_count, failed_files)
 
-def main():
-    print("=== Confluence Exporter with Logging & Diff ===")
-    ensure_dirs()
-    setup_logging(LOG_FILE)
 
-    while True:
-        print(f"\nСинхронизация запущена: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        sync_pages()
-        print(f"Ожидание {POLLING_INTERVAL} секунд...\n")
-        time.sleep(POLLING_INTERVAL)
-
-if __name__ == "__main__":
-    main()

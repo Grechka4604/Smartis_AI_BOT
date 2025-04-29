@@ -1,5 +1,5 @@
 from openai import AsyncOpenAI, OpenAI
-from config import OPEN_AI_API_KEY, ASSISTIANT_ID, VECTORE_ID, OUTPUT_DIR
+from config import OPEN_AI_API_KEY, ASSISTIANT_ID, VECTORE_ID, OUTPUT_DIR, INSTRUCTIONS
 import asyncio
 import os
 from OpenAI.file_mapping import save_mappings, load_mappings
@@ -28,21 +28,12 @@ def delete_files(file_id):
 
 
 
-
-
-
-
-
 # обновленный метод загрузки файлов с маппингом идентификаторо и имен файлов
 def upload_files(file_paths):
     file_mapping = load_mappings(OUTPUT_DIR)
     
     for path in file_paths:
         file_name = os.path.basename(path)
-        
-        if file_name in file_mapping:
-            print(f"Файл с именем '{file_name}' уже загружен")
-            continue
             
         try:
             with open(path, "rb") as f:
@@ -61,6 +52,8 @@ def upload_files(file_paths):
                         file_mapping[file_name] = files.data[0].id
                         save_mappings(file_mapping, OUTPUT_DIR)
                         print(f"Успешно: '{file_name}' → ID {files.data[0].id}")
+                        if file_name in file_mapping:
+                            print(f"Обновлён ID для существующего имени файла")
                         
         except Exception as e:
             print(f"Ошибка загрузки '{file_name}': {str(e)}")
@@ -98,7 +91,8 @@ async def get_assistant_response(user_message: str) -> str:
         
         run = await async_client.beta.threads.runs.create(
             thread_id=thread.id,
-            assistant_id=ASSISTIANT_ID
+            assistant_id=ASSISTIANT_ID,
+            instructions=INSTRUCTIONS
         )
         
         start_time = asyncio.get_event_loop().time()

@@ -21,7 +21,7 @@ async def handle_user_message(message: types.Message):
 
     try:
         reply = await get_assistant_response(message.text)
-        await message.answer(reply)  
+        await message.answer(reply, parse_mode="Markdown")  
 
     except Exception as e:
         await message.answer(f"❌ Произошла ошибка: {e}") 
