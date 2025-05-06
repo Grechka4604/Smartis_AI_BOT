@@ -1,5 +1,3 @@
-# version_cache.py
-
 import os
 import logging
 

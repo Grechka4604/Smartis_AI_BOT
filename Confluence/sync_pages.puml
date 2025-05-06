@@ -1,0 +1,52 @@
+@startuml
+
+participant Script
+participant FileStorage
+participant ConfluenceAPI
+
+activate Script
+Script -> FileStorage: Get last saved cache
+activate FileStorage
+FileStorage --> Script: Return cache
+deactivate FileStorage
+
+Script -> ConfluenceAPI: Request all IDs in our space
+activate ConfluenceAPI
+ConfluenceAPI --> Script: Send the response
+deactivate ConfluenceAPI
+
+alt code = 200
+    loop id in IDs
+        Script -> ConfluenceAPI: Request page's details
+        activate ConfluenceAPI
+        ConfluenceAPI --> Script: Send the response
+        deactivate ConfluenceAPI
+        
+        alt code = 200 AND "details" available
+            Script -> Script: Save new cache
+            Script -> Script: Check version_cache
+            
+            alt page_id not in version_cache 
+                Script -> FileStorage: Save to directory for new files
+                activate FileStorage
+                FileStorage --> Script: File saved
+                deactivate FileStorage
+            else page_id in version_cache AND version_cache[page_id] < details['version']
+                Script -> FileStorage: Save to directory for updates files
+                activate FileStorage
+                FileStorage --> Script: File updated
+                deactivate FileStorage
+            end
+        end
+    end
+    
+    Script -> FileStorage: Save new cache to storage
+    activate FileStorage
+    FileStorage --> Script: Cache saved
+    deactivate FileStorage
+else code != 200
+    Script -> Script: Handle error
+end
+
+deactivate Script
+@enduml

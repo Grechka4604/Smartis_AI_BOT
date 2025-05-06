@@ -25,7 +25,7 @@ def ensure_dirs():
     os.makedirs(UPD_DIR, exist_ok=True)
     setup_logging(LOG_FILE)
 
-    # Проверка прав на запись
+    # проверка прав на запись
     test_file = os.path.join(OUTPUT_DIR, '.permission_test')
     try:
         with open(test_file, 'w') as f:
@@ -38,7 +38,7 @@ def ensure_dirs():
 
 
 
-
+# основная функция синхронизации страниц
 def sync_pages():
     version_cache = load_version_cache(OUTPUT_DIR)
     new_cache = {}
@@ -65,7 +65,7 @@ def sync_pages():
             continue
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, 'w', encoding='utf-8') as l:
                 f.write(details['content'])
             if page_id not in version_cache:
                 new_count += 1
