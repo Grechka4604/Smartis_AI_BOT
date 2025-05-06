@@ -65,7 +65,7 @@ def sync_pages():
             continue
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as l:
+            with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(details['content'])
             if page_id not in version_cache:
                 new_count += 1

@@ -1,0 +1,61 @@
+@startuml
+participant "Пользователь" as User
+participant "TelegramBot" as Bot
+participant "OpenAI API" as OpenAI
+participant "Google Sheets" as Sheets
+
+== Обработка команды /start ==
+User -> Bot: /start
+Bot --> User: "Привет! Напиши мне что-нибудь..."
+
+== Основной сценарий ==
+User -> Bot: Вопрос
+activate Bot
+Bot -> OpenAI: Запрос к ассистенту (get_assistant_response)
+activate OpenAI
+OpenAI --> Bot: Ответ ассистента
+deactivate OpenAI
+note right
+    Алгоритм работы с Assistaint API
+    подробно разобран в диаграмме openAI_API.puml
+    в "Асинхронной функции запросов к ассистенту"
+end note
+
+Bot --> User: Ответ на вопрос
+Bot -> Bot: Сохраняем вопрос/ответ в user_data
+Bot --> User: "Помог ли вам этот ответ?" + клавиатура Да/Нет
+deactivate Bot
+
+== Обработка фидбека ==
+alt Пользователь выбирает "Да"
+    User -> Bot: "Да"
+    activate Bot
+    Bot -> Sheets: Добавление записи [дата, вопрос, ответ, "Да"]
+    activate Sheets
+    Sheets --> Bot: OK
+    deactivate Sheets
+    Bot --> User: "Отлично! Рад помочь!"
+else Пользователь выбирает "Нет"
+    User -> Bot: "Нет"
+    activate Bot
+    Bot -> Sheets: Добавление записи [дата, вопрос, ответ, "Нет"]
+    activate Sheets
+    Sheets --> Bot: OK
+    deactivate Sheets
+    Bot --> User: "Жаль, постараюсь улучшиться!"
+end
+deactivate Bot
+
+== Обработка ошибок ==
+group Если ошибка в OpenAI
+    User -> Bot: Вопрос
+    activate Bot
+    Bot -> OpenAI: Запрос (ошибка)
+    activate OpenAI
+    OpenAI --> Bot: Ошибка
+    deactivate OpenAI
+    Bot --> User: "❌ Произошла ошибка: ..."
+    deactivate Bot
+end
+
+@enduml
