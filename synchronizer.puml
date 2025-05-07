@@ -1,0 +1,160 @@
+@startuml
+
+
+participant Script
+participant FileStorage as FS
+participant ConfluenceAPI
+participant "OpenAI APi" AS OA
+
+== Синхронизация с Confluence ==
+activate Script
+Script -> FS: Запрашиваем последний сохраненный кэш
+activate FS
+FS --> Script: Получаем последний сохраненный кэш
+deactivate FS
+Script -> ConfluenceAPI: Запрашиваем идентификаторы всех страниц в пространстве
+activate ConfluenceAPI
+ConfluenceAPI --> Script: array [ids]
+deactivate ConfluenceAPI
+alt code = 200
+    loop id in IDs
+        Script -> ConfluenceAPI: Запрос на детализацию кнкретной страницы
+        activate ConfluenceAPI
+        ConfluenceAPI --> Script: Ответ
+        deactivate ConfluenceAPI
+        alt code = 200 AND "details" available
+            Script -> Script: Сохраняем новый кэш в переменную
+            Script -> Script: Сверяем кэщ
+            alt Страницы нет в ранее сохраненном кэше 
+                Script -> FS: Сохраняем в папку new_files
+                activate FS
+                FS --> Script: OK
+                deactivate FS
+            else (Страница есть в ранее сохраненном кэше) AND (текщий кэш больше ранее сохраненного)
+                Script -> FS: Соххраняем в папку update_files
+                activate FS
+                FS --> Script: OK
+                deactivate FS
+            end
+        else
+        end
+    end
+    Script -> FS: Сохраняем обновленный кэш в файл
+    activate FS
+    FS --> Script: OK
+    deactivate FS
+else code != 200
+deactivate Script
+
+
+
+== Загрузка новых страниц ==
+Script -> Script: Формруем путь к папке с обновленными файлами
+activate Script
+loop file in folder
+    Script -> Script: Формируем путь к файлу
+    alt такой файл существует
+        Script -> FS: Запрашиваем файла с маппингом
+        activate FS
+        FS --> Script: Получаем файл с маппингом
+        deactivate FS
+
+        loop path in file_path
+            Script -> OA: Создаем партию и загружаем
+            activate OA
+            note right
+                Создаем batch из файла и загружаем 
+                в векторное хранилище
+            end note 
+            OA --> Script: Возвращает статус загрузки
+            deactivate OA
+            alt Загрузка завершилась
+                Script -> OA: Запрос списка загруженных в данной партии файлов
+                activate OA
+                OA --> Script: Получаем список файлов
+                deactivate OA
+                alt Список не пустой
+                    Script -> Script: формируем связку "ключ: значение"
+                    note right
+                        file_mapping[file_name] = files.data[0].id
+                    end note
+                    Script -> FS: Сохраняем или обновляем связку в файле
+                    activate FS
+                    FS --> Script: Подтверждение сохраненных маппингов
+                    deactivate FS
+                else
+                end
+            else
+            end
+        end
+        Script -> FS: Удаление файла из папки
+        activate FS
+        FS --> Script: ОК
+        deactivate FS
+    else
+    end
+end
+deactivate Script
+
+
+
+
+
+== Загрузка обновленных страниц ==
+Script -> Script: Формруем путь к папке с обновленными файлами
+activate Script
+loop file in folder
+    Script -> Script: Формируем путь к файлу
+    alt такой файл существует
+        Script -> FS: Запрашиваем идентификатор файла в VS
+        activate FS
+        FS --> Script: file_id
+        deactivate FS
+        Script -> OA: Запрос на удаление файла из VS (file_id)
+        activate OA
+        OA --> Script: OK
+        deactivate OA
+
+        Script -> FS: Запрашиваем файла с маппингом
+        activate FS
+        FS --> Script: Получаем файл с маппингом
+        deactivate FS
+
+        loop path in file_path
+            Script -> OA: Создаем партию и загружаем
+            activate OA
+            note right
+                Создаем batch из файла и загружаем 
+                в векторное хранилище
+            end note 
+            OA --> Script: Возвращает статус загрузки
+            deactivate OA
+            alt Загрузка завершилась
+                Script -> OA: Запрос списка загруженных в данной партии файлов
+                activate OA
+                OA --> Script: Получаем список файлов
+                deactivate OA
+                alt Список не пустой
+                    Script -> Script: формируем связку "ключ: значение"
+                    note right
+                        file_mapping[file_name] = files.data[0].id
+                    end note
+                    Script -> FS: Сохраняем или обновляем связку в файле
+                    activate FS
+                    FS --> Script: Подтверждение сохраненных маппингов
+                    deactivate FS
+                else
+                end
+            else
+            end
+        end
+        Script -> FS: Удаление файла из папки
+        activate FS
+        FS --> Script: ОК
+        deactivate FS
+    else
+    end
+end
+deactivate Script
+
+@enduml

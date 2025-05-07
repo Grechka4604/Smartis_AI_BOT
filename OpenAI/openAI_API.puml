@@ -1,0 +1,94 @@
+@startuml
+
+participant Script 
+participant "openAI API" as OA
+participant "FileStorage" as FS
+== Удаление файла из векторного хранилища(на вход получаем file_id)==
+    Script -> OA: Удаление файла
+    activate Script
+    activate OA
+    note right
+        Удаление происходит по следующему принципу:
+        передаем client -> vectore_store_id -> file_id
+    end note
+    OA --> Script: Возвращает состояние удаления
+    deactivate OA
+    deactivate Script
+
+== Загрузка файлов(на вход получаем массив из абсолютных путей к файлам)==
+    Script -> FS: Запрашиваем файла с маппингом
+    activate Script
+    activate FS
+    FS --> Script: Получаем файл с маппингом
+    deactivate FS
+
+    loop path in file_path
+        Script -> OA: Создаем партию и загружаем
+        activate OA
+        note right
+            Создаем batch из файла и загружаем 
+            в векторное хранилище
+        end note 
+        OA --> Script: Возвращает статус загрузки
+        deactivate OA
+        alt Загрузка завершилась
+            Script -> OA: Запрос списка загруженных в данной партии файлов
+            activate OA
+            OA --> Script: Получаем список файлов
+            deactivate OA
+            alt Список не пустой
+                Script -> Script: формируем связку "ключ: значение"
+                note right
+                    file_mapping[file_name] = files.data[0].id
+                end note
+                Script -> FS: Сохраняем или обновляем связку в файле
+                activate FS
+                FS --> Script: Подтверждение сохраненных маппингов
+                deactivate FS
+            else
+            end
+        else
+        end
+    end
+    deactivate Script
+
+== Асинхронная функция запросов к ассистенту ==
+    Script ->> OA: Создание потока
+    note right
+        В данном случае поток не несет в себе смысла с точки зрения
+        сохранения истории переписки, так как при каждом запросе мы 
+        просто идем за информацией в векторное хранилище
+    end note
+    activate Script
+    activate OA
+    OA -->> Script: Возвращает thread_id
+    deactivate OA
+    Script ->> OA: Создание сообщения
+    activate OA   
+    OA -->> Script: OK
+    deactivate OA
+    Script ->> OA: запуск ассистента
+    activate OA
+    OA -->> Script: run.id
+    deactivate OA
+    loop Пока статус не "completed"
+        Script ->> OA: захват ассистента
+        activate OA
+        alt Статус "completed"
+            OA -->> Script: status = completed
+        else Статус "failed"
+            OA -->> Script: status = failed
+            Script -> Script: raise RuntimeError
+        else Таймаут
+            Script -> Script: raise TimeoutError
+        end
+        deactivate OA
+        Script -> Script: await asyncio.sleep(0.5)
+    end
+    Script ->> OA: Запрос ответа
+    activate OA
+    OA -->> Script: messages.data
+    deactivate OA
+    deactivate Script
+
+@enduml

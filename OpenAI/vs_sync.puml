@@ -1,0 +1,116 @@
+@startuml
+
+
+participant Script
+participant "OpenAI APi" AS OA
+participant FileStorage AS FS 
+
+== Загрузка обновленных страниц ==
+activate Script
+Script -> Script: Формруем путь к папке с обновленными файлами
+loop file in folder
+    Script -> Script: Формируем путь к файлу
+    alt такой файл существует
+        Script -> FS: Запрашиваем идентификатор файла в VS
+        activate FS
+        FS --> Script: file_id
+        deactivate FS
+        Script -> OA: Запрос на удаление файла из VS (file_id)
+        activate OA
+        OA --> Script: OK
+        deactivate OA
+
+        Script -> FS: Запрашиваем файла с маппингом
+        activate FS
+        FS --> Script: Получаем файл с маппингом
+        deactivate FS
+
+        loop path in file_path
+            Script -> OA: Создаем партию и загружаем
+            activate OA
+            note right
+                Создаем batch из файла и загружаем 
+                в векторное хранилище
+            end note 
+            OA --> Script: Возвращает статус загрузки
+            deactivate OA
+            alt Загрузка завершилась
+                Script -> OA: Запрос списка загруженных в данной партии файлов
+                activate OA
+                OA --> Script: Получаем список файлов
+                deactivate OA
+                alt Список не пустой
+                    Script -> Script: формируем связку "ключ: значение"
+                    note right
+                        file_mapping[file_name] = files.data[0].id
+                    end note
+                    Script -> FS: Сохраняем или обновляем связку в файле
+                    activate FS
+                    FS --> Script: Подтверждение сохраненных маппингов
+                    deactivate FS
+                else
+                end
+            else
+            end
+        end
+        Script -> FS: Удаление файла из папки
+        activate FS
+        FS --> Script: ОК
+        deactivate FS
+    else
+    end
+end
+deactivate Script
+
+
+== Загрузка новых страниц ==
+activate Script
+Script -> Script: Формруем путь к папке с обновленными файлами
+loop file in folder
+    Script -> Script: Формируем путь к файлу
+    alt такой файл существует
+        Script -> FS: Запрашиваем файла с маппингом
+        activate FS
+        FS --> Script: Получаем файл с маппингом
+        deactivate FS
+
+        loop path in file_path
+            Script -> OA: Создаем партию и загружаем
+            activate OA
+            note right
+                Создаем batch из файла и загружаем 
+                в векторное хранилище
+            end note 
+            OA --> Script: Возвращает статус загрузки
+            deactivate OA
+            alt Загрузка завершилась
+                Script -> OA: Запрос списка загруженных в данной партии файлов
+                activate OA
+                OA --> Script: Получаем список файлов
+                deactivate OA
+                alt Список не пустой
+                    Script -> Script: формируем связку "ключ: значение"
+                    note right
+                        file_mapping[file_name] = files.data[0].id
+                    end note
+                    Script -> FS: Сохраняем или обновляем связку в файле
+                    activate FS
+                    FS --> Script: Подтверждение сохраненных маппингов
+                    deactivate FS
+                else
+                end
+            else
+            end
+        end
+        Script -> FS: Удаление файла из папки
+        activate FS
+        FS --> Script: ОК
+        deactivate FS
+    else
+    end
+end
+deactivate Script
+
+
+
+@enduml

@@ -9,10 +9,8 @@ def main():
     ensure_dirs()
     while True:
         sync_pages()
-        # print("begin")
-        # sync_new_files()
-        # sync_updated_files()
-        # print("end")
+        sync_new_files()
+        sync_updated_files()
 
         time.sleep(POLLING_INTERVAL)
 
