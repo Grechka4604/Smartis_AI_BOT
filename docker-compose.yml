@@ -3,11 +3,15 @@ services:
     build:
       dockerfile: docker/bot/Dockerfile
     working_dir: /srv
+    ports:
+      - "8000:8000"
     volumes:
       - .:/srv
   sync:
     build:
       dockerfile: docker/synchronizer/Dockerfile
     working_dir: /srv
+    ports:
+      - "8080:8080"
     volumes:
       - .:/srv
