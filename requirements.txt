@@ -1,0 +1,6 @@
+requests~=2.31.0
+aiogram~=3.20.0
+google~=3.0.0
+google-api-python-client~=2.169.0
+dotenv~=0.9.9
+openai~=1.79.0

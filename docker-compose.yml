@@ -1,0 +1,7 @@
+services:
+  py:
+    build:
+      dockerfile: docker/python/Dockerfile
+    working_dir: /srv
+    volumes:
+      - .:/srv
