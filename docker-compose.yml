@@ -1,7 +1,13 @@
 services:
-  py:
+  bot:
     build:
-      dockerfile: docker/python/Dockerfile
+      dockerfile: docker/bot/Dockerfile
+    working_dir: /srv
+    volumes:
+      - .:/srv
+  sync:
+    build:
+      dockerfile: docker/synchronizer/Dockerfile
     working_dir: /srv
     volumes:
       - .:/srv
